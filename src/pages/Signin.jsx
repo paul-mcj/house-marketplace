@@ -7,7 +7,10 @@ import { Link, useNavigate } from "react-router-dom";
 // toastify
 import { toast } from "react-toastify";
 
-// firebase and firestore
+// components
+import OAuth from "../components/OAuth";
+
+// firebase
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 // icons
@@ -15,12 +18,18 @@ import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRig
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 
 const Signin = () => {
+     // get auth value from firebase
+     const auth = getAuth();
+
+     // state
      const [showPassword, setShowPassword] = useState(false);
      const [formData, setFormData] = useState({ email: "", password: "" });
      const { email, password } = formData;
 
+     // for navigation url
      const navigate = useNavigate();
 
+     // input field value changes
      const handleOnChange = (e) => {
           setFormData((prev) => ({
                ...prev,
@@ -28,13 +37,11 @@ const Signin = () => {
           }));
      };
 
+     // form submission
      const handleOnSubmit = async (e) => {
           e.preventDefault();
 
           try {
-               // get auth value from firebase
-               const auth = getAuth();
-
                // register user
                const userCredential = await signInWithEmailAndPassword(
                     auth,
@@ -44,8 +51,11 @@ const Signin = () => {
 
                // if user is already on firebase, redirect to home page
                userCredential.user && navigate("/");
+
+               toast.success(`Welcome back, ${auth.currentUser.displayName}`);
           } catch (err) {
-               toast.error("Bad user credentials");
+               console.log(err);
+               toast.error(`Bad user credentials. ${err.message}`);
           }
      };
 
@@ -55,60 +65,54 @@ const Signin = () => {
                     <header>
                          <p className="pageHeader">Welcome Back!</p>
                     </header>
-                    <main>
-                         <form onSubmit={handleOnSubmit}>
+                    <form onSubmit={handleOnSubmit}>
+                         <input
+                              type="email"
+                              className="emailInput"
+                              placeholder="Email"
+                              id="email"
+                              value={email}
+                              onChange={handleOnChange}
+                         />
+                         <div className="passwordInputDiv">
                               <input
-                                   type="email"
-                                   className="emailInput"
-                                   placeholder="Email"
-                                   id="email"
-                                   value={email}
+                                   type={showPassword ? "text" : "password"}
+                                   className="passwordInput"
+                                   placeholder="password"
+                                   id="password"
+                                   value={password}
                                    onChange={handleOnChange}
                               />
-                              <div className="passwordInputDiv">
-                                   <input
-                                        type={
-                                             showPassword ? "text" : "password"
-                                        }
-                                        className="passwordInput"
-                                        placeholder="password"
-                                        id="password"
-                                        value={password}
-                                        onChange={handleOnChange}
-                                   />
-                                   <img
-                                        src={visibilityIcon}
-                                        alt="show password"
-                                        onClick={() =>
-                                             setShowPassword((prev) =>
-                                                  setShowPassword(!prev)
-                                             )
-                                        }
-                                        className="showPassword"
-                                   />
-                              </div>
-                              <Link
-                                   to="/forgot-password"
-                                   className="forgotPasswordLink"
-                              >
-                                   Forgot Password
-                              </Link>
-                              <div className="signInBar">
-                                   <p className="signInText">Sign In</p>
-                                   <button className="signInButton">
-                                        <ArrowRightIcon
-                                             fill="#fff"
-                                             width="34px"
-                                             height="34px"
-                                        />
-                                   </button>
-                              </div>
-                         </form>
-                         {/* Google OAuth */}
-                         <Link to="/signup" className="registerLink">
-                              Sign Up Instead
+                              <img
+                                   src={visibilityIcon}
+                                   alt="show password"
+                                   onClick={() =>
+                                        setShowPassword((prev) => !prev)
+                                   }
+                                   className="showPassword"
+                              />
+                         </div>
+                         <Link
+                              to="/forgot-password"
+                              className="forgotPasswordLink"
+                         >
+                              Forgot Password
                          </Link>
-                    </main>
+                         <div className="signInBar">
+                              <p className="signInText">Sign In</p>
+                              <button className="signInButton">
+                                   <ArrowRightIcon
+                                        fill="#fff"
+                                        width="34px"
+                                        height="34px"
+                                   />
+                              </button>
+                         </div>
+                    </form>
+                    <OAuth />
+                    <Link to="/signup" className="registerLink">
+                         Sign Up Instead
+                    </Link>
                </div>
           </>
      );
