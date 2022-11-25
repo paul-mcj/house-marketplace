@@ -4,11 +4,11 @@ import { useState } from "react";
 // react router dom
 import { Link, useNavigate } from "react-router-dom";
 
-// icons
+// assets
 import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 
-// toastify
+// react toastify
 import { toast } from "react-toastify";
 
 // components

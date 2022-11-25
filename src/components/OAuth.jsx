@@ -22,10 +22,6 @@ const OAuth = () => {
 
      // initialize Google provider
      const provider = new GoogleAuthProvider();
-     // popup will allow you to select from account, instead of automatic loggin
-     provider.setCustomParameters({
-          prompt: "select_account",
-     });
 
      // for Google authentication
      const handleGoogleAuth = async () => {
