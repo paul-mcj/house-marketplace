@@ -12,6 +12,10 @@ import { toast } from "react-toastify";
 // react router dom
 import { useNavigate, Link } from "react-router-dom";
 
+// assets
+import arrowRight from "../assets/svg/keyboardArrowRightIcon.svg";
+import homeIcon from "../assets/svg/homeIcon.svg";
+
 const Profile = () => {
      // get auth value from firebase
      const auth = getAuth();
@@ -77,10 +81,6 @@ const Profile = () => {
                          <p
                               className="changePersonalDetails"
                               onClick={handleOnSubmit}
-                              // onClick={() => {
-                              //      changeDetails && handleOnSubmit();
-                              //      setChangeDetails((prev) => !prev);
-                              // }}
                          >
                               {changeDetails ? "done" : "change"}
                          </p>
@@ -113,6 +113,11 @@ const Profile = () => {
                               />
                          </form>
                     </div>
+                    <Link to="/create-listing" className="createListing">
+                         <img src={homeIcon} alt="home" />
+                         <p>Sell or rent your home</p>
+                         <img src={arrowRight} alt="arrow right" />
+                    </Link>
                </main>
           </div>
      );
