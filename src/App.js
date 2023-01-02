@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 // components
 import NavBar from "./components/NavBar";
 import PrivateRoute from "./components/PrivateRoute";
+import Listing from "./pages/Listing";
 
 // react toastify
 import { ToastContainer } from "react-toastify";
@@ -39,6 +40,10 @@ function App() {
                          element={<ForgotPassword />}
                     />
                     <Route path="/create-listing" element={<CreateListing />} />
+                    <Route
+                         path="/category/:categoryName/:listingId"
+                         element={<Listing />}
+                    />
                </Routes>
                <NavBar />
                <ToastContainer

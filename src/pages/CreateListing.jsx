@@ -4,8 +4,19 @@ import { useState, useEffect, useRef } from "react";
 // react toastify
 import { toast } from "react-toastify";
 
+// uuid
+import { v4 as uuidv4 } from "uuid";
+
 // firebase
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import {
+     getStorage,
+     ref,
+     uploadBytesResumable,
+     getDownloadURL,
+} from "firebase/storage";
+import { db } from "../firebase.config";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 // react router dom
 import { useNavigate } from "react-router-dom";
@@ -17,14 +28,17 @@ const CreateListing = () => {
      // initialize auth
      const auth = getAuth();
 
-     // loading state
-     const [loading, setLoading] = useState(false);
+     // initialize firebase storage capabilities
+     const storage = getStorage();
 
      // initialize navigation
      const navigate = useNavigate();
 
      // use to check if component is mounted (to avoid memory leeks)
      const isMounted = useRef(true);
+
+     // loading state
+     const [loading, setLoading] = useState(false);
 
      // geolocation state
      const [geolocationEnabled, setGeolocationEnabled] = useState(true);
@@ -81,6 +95,52 @@ const CreateListing = () => {
           //note: adding formData as a dependency will result in a loop, so it should not be added as a dependency
      }, [isMounted, auth, navigate]);
 
+     // function that stores an image in firebase when a user adds one
+     const storeImage = async (image) => {
+          // need to create a new Promise for each image added when this function is invoked
+          return new Promise((resolve, reject) => {
+               // create a new filename composed of user credentials, the image name and a unique suffix
+               const fileName = `${auth.currentUser.uid}-${
+                    image.name
+               }-${uuidv4()}`;
+
+               // create a reference for the image for storage purposes (its location is under an "images" folder)
+               const storageRef = ref(storage, `images/${fileName}`);
+
+               // this firebase function follows Google documentation for file uploads to the database
+               const uploadTask = uploadBytesResumable(storageRef, image);
+
+               // Register three observers:
+               // 1. 'state_changed' observer, called any time the state changes
+               // 2. Error observer, called on failure
+               // 3. Completion observer, called on successful completion
+               uploadTask.on(
+                    "state_changed",
+                    (snapshot) => {
+                         // Observe state change events such as progress, pause, and resume
+                         // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                         const progress =
+                              (snapshot.bytesTransferred /
+                                   snapshot.totalBytes) *
+                              100;
+                         console.log("Upload is " + progress + "% done");
+                    },
+                    (error) => {
+                         // Handle unsuccessful uploads from the failed Promise
+                         reject(error);
+                    },
+                    () => {
+                         // Handle successful uploads on complete
+                         getDownloadURL(uploadTask.snapshot.ref).then(
+                              (downloadURL) => {
+                                   resolve(downloadURL);
+                              }
+                         );
+                    }
+               );
+          });
+     };
+
      // form submission function (needs to be async to fetch geolocation resources)
      const handleOnSubmit = async (e) => {
           e.preventDefault();
@@ -103,7 +163,7 @@ const CreateListing = () => {
                return;
           }
 
-          // geocoding
+          // get geocoding data
           let geolocation = {};
           let location;
 
@@ -128,8 +188,41 @@ const CreateListing = () => {
           } else {
                geolocation.lat = latitude;
                geolocation.lng = longitude;
-               location = address;
           }
+
+          // loop thorough all uploaded images to resolve Promises -- can use a catch clause should an error occur on any Promise being looped thorough
+          const imgUrls = await Promise.all(
+               [...images].map((image) => storeImage(image))
+          ).catch(() => {
+               setLoading(() => false);
+               toast.error("Images not uploaded");
+               return;
+          });
+
+          // create an object to submit to database
+          const formDataCopy = {
+               ...formData,
+               imgUrls,
+               geolocation,
+               timestamp: serverTimestamp(),
+          };
+
+          // we don't want the actual images to be uploaded (as we have the url to each), as well as the address given (as it has been gathered with geolocation), so to circumvent larger uploads of data and resolve possible errors, just delete the following from the formCopyData before final submission:
+          delete formDataCopy.images;
+          delete formDataCopy.address;
+
+          // also make sure to set the location to the address the user typed in (as using geolocation formatted data from Google maps for this isn't reliable)
+          formDataCopy.location = address;
+
+          // if there is no offer, then delete the discounted price
+          !formDataCopy.offer && delete formDataCopy.discountedPrice;
+
+          // now, save the cleaned up object to the database collection on firebase
+          const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+          toast.success("Listing saved!");
+          navigate(`/category/${formDataCopy.type}/${docRef.id}`);
+
+          // reset loading state
           setLoading(() => false);
      };
 
