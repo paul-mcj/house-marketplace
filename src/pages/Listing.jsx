@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 // react router dom
 import { Link, useParams } from "react-router-dom";
 
+// react leaflet
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+
+// swiper
+import SwiperCore, { Navigation, Pagination, Scrollbar, A11y } from "swiper";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css/bundle";
+
 // firebase
 import { getDoc, doc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -59,7 +67,27 @@ const Listing = () => {
 
      return (
           <main>
-               {/* slider */}
+               {/* Image Slider */}
+               <Swiper
+                    modules={[Navigation, Pagination, Scrollbar, A11y]}
+                    slidesPerView={1}
+                    pagination={{ clickable: true }}
+                    style={{ height: "300px" }}
+               >
+                    {listing.imgUrls.map((url, index) => (
+                         <SwiperSlide key={index}>
+                              <div
+                                   style={{
+                                        background: `url(${listing.imgUrls[index]}) center no-repeat`,
+                                        backgroundSize: "cover",
+                                   }}
+                                   className="swiperSlideDiv"
+                              ></div>
+                         </SwiperSlide>
+                    ))}
+               </Swiper>
+
+               {/* Information */}
                <div className="shareIconDiv" onClick={shareLink}>
                     <img src={ShareIcon} alt="" />
                </div>
@@ -95,9 +123,35 @@ const Listing = () => {
                          <li>{listing.parking && "Parking Spot"}</li>
                          <li>{listing.furnished && "Furnished"}</li>
                     </ul>
-                    {/* Geolocation Map */}
-                    <p className="listingLocationTitle">Location</p>
 
+                    {/* Interactive Leaflet Map */}
+                    <p className="listingLocationTitle">Location</p>
+                    <div className="leafletContainer">
+                         <MapContainer
+                              style={{ height: "100%", width: "100%" }}
+                              center={[
+                                   listing.geolocation.lat,
+                                   listing.geolocation.lng,
+                              ]}
+                              zoom={13}
+                              scrollWheelZoom={false}
+                         >
+                              <TileLayer
+                                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                   url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                              />
+                              <Marker
+                                   position={[
+                                        listing.geolocation.lat,
+                                        listing.geolocation.lng,
+                                   ]}
+                              >
+                                   <Popup>{listing?.name}</Popup>
+                              </Marker>
+                         </MapContainer>
+                    </div>
+
+                    {/* Contact Button */}
                     {auth.currentUser?.uid !== listing.userRef && (
                          <Link
                               to={`/contact/${listing.userRef}?listingName=${listing.name}`}
