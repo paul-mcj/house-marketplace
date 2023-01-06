@@ -11,9 +11,6 @@ import { db } from "../firebase.config";
 // react toastify
 import { toast } from "react-toastify";
 
-// components
-import Spinner from "../components/Spinner";
-
 const Contact = () => {
      // init hooks
      const params = useParams();
@@ -22,7 +19,6 @@ const Contact = () => {
 
      // local state
      const [message, setMessage] = useState("");
-     const [loading, setLoading] = useState(true);
      const [landlord, setLandlord] = useState(null);
 
      // textarea state change
@@ -37,7 +33,6 @@ const Contact = () => {
                if (docSnap.exists()) {
                     console.log(docSnap.data());
                     setLandlord(() => docSnap.data());
-                    // setLoading(() => false);
                } else {
                     // this error will show if the user of the listing is non-existent
                     toast.error("Could not retrieve landlord data");
@@ -46,10 +41,6 @@ const Contact = () => {
 
           getLandlord();
      }, [landlordId]);
-
-     //  if (loading) {
-     //   return <Spinner />;
-     //  }
 
      return (
           <div className="pageContainer">

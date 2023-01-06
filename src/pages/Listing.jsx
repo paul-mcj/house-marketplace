@@ -7,18 +7,22 @@ import { Link, useParams } from "react-router-dom";
 // react leaflet
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 
+// components
+import Spinner from "../components/Spinner";
+
 // swiper
-import SwiperCore, { Navigation, Pagination, Scrollbar, A11y } from "swiper";
+import { Navigation, Pagination, Scrollbar, A11y, Autoplay } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css/bundle";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/scrollbar";
+import "swiper/css/a11y";
 
 // firebase
 import { getDoc, doc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebase.config";
-
-// components
-import Spinner from "../components/Spinner";
 
 // assets
 import ShareIcon from "../assets/svg/shareIcon.svg";
@@ -48,16 +52,19 @@ const Listing = () => {
      // immediately fetch listing when page is loaded
      useEffect(() => {
           const fetchListing = async () => {
-               const docRef = doc(db, "listings", listingId);
-               const docSnap = await getDoc(docRef);
+               try {
+                    const docRef = doc(db, "listings", listingId);
+                    const docSnap = await getDoc(docRef);
 
-               if (docSnap.exists()) {
-                    console.log(docSnap.data());
-                    setListing(() => docSnap.data());
-                    setLoading(() => false);
+                    if (docSnap.exists()) {
+                         setListing(() => docSnap.data());
+                         console.log(docSnap.data());
+                         setLoading(() => false);
+                    }
+               } catch (err) {
+                    console.log(err);
                }
           };
-
           fetchListing();
      }, [listingId]);
 
@@ -77,14 +84,15 @@ const Listing = () => {
                     {listing.imgUrls.map((url, index) => (
                          <SwiperSlide key={index}>
                               <div
+                                   className="swiperSlideDiv"
                                    style={{
                                         background: `url(${listing.imgUrls[index]}) center no-repeat`,
                                         backgroundSize: "cover",
                                    }}
-                                   className="swiperSlideDiv"
                               ></div>
                          </SwiperSlide>
                     ))}
+                    ;
                </Swiper>
 
                {/* Information */}
