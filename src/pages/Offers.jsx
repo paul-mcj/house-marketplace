@@ -1,9 +1,6 @@
 // react and misc
 import { useEffect, useState } from "react";
 
-// react router dom
-import { useParams } from "react-router-dom";
-
 // firebase
 import {
      collection,
@@ -24,13 +21,51 @@ import Spinner from "../components/Spinner";
 import ListingItem from "../components/ListingItem";
 
 const Offers = () => {
-     // url parameters
-     const params = useParams();
-     const { categoryName } = params;
-
      // component level state
      const [listings, setListings] = useState(null);
      const [loading, setLoading] = useState(true);
+     const [lastFetchedListing, setLastFetchedListing] = useState(null);
+
+     // for pagination purposes
+     const onFetchMoreListings = async () => {
+          try {
+               // get reference to collection
+               const listingsRef = collection(db, "listings");
+
+               // make a query, based on the dynamic react route pathname (as the route to this page in <App /> allows for dynamic routing)
+               const q = query(
+                    listingsRef,
+                    where("offer", "==", true),
+                    orderBy("timestamp", "desc"),
+                    startAfter(lastFetchedListing),
+                    limit(2)
+               );
+
+               // execute query and get the documents that match the query above
+               const querySnap = await getDocs(q);
+
+               // used for pagination purposes
+               const lastVisible = querySnap.docs[querySnap.docs.length - 1];
+               setLastFetchedListing(() => lastVisible);
+
+               // loop through snapshot
+               let listings = [];
+               querySnap.forEach((doc) => {
+                    return listings.push({
+                         // the below syntax is weird to get these different values, but this is how firebase works!
+                         id: doc.id,
+                         data: doc.data(),
+                    });
+               });
+
+               // change state
+               setListings((prev) => [...prev, ...listings]);
+               setLoading(() => false);
+          } catch (err) {
+               console.log(err);
+               toast.error(`Could not fetch listings. ${err.message}`);
+          }
+     };
 
      useEffect(() => {
           const fetchListings = async () => {
@@ -43,11 +78,16 @@ const Offers = () => {
                          listingsRef,
                          where("offer", "==", true),
                          orderBy("timestamp", "desc"),
-                         limit(10)
+                         limit(2)
                     );
 
                     // execute query and get the documents that match the query above
                     const querySnap = await getDocs(q);
+
+                    // used for pagination purposes
+                    const lastVisible =
+                         querySnap.docs[querySnap.docs.length - 1];
+                    setLastFetchedListing(() => lastVisible);
 
                     // loop through snapshot
                     let listings = [];
@@ -86,6 +126,13 @@ const Offers = () => {
                          ))}
                     </ul>
                </main>
+               <br />
+               <br />
+               {lastFetchedListing && (
+                    <p className="loadMore" onClick={onFetchMoreListings}>
+                         Load More
+                    </p>
+               )}
           </>
      );
 
