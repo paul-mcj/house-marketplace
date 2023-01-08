@@ -5,11 +5,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 // firebase
-import {
-     confirmPasswordReset,
-     getAuth,
-     sendPasswordResetEmail,
-} from "firebase/auth";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 
 // toastify
 import { toast } from "react-toastify";
@@ -39,7 +35,6 @@ const ForgotPassword = () => {
                     `Email was sent to ${email}. Please check your inbox to reset your password.`
                );
           } catch (err) {
-               console.log(err);
                toast.error(`Could not send reset email. ${err.message}`);
           }
      };

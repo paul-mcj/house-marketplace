@@ -54,7 +54,6 @@ const Signin = () => {
 
                toast.success(`Welcome back, ${auth.currentUser.displayName}`);
           } catch (err) {
-               console.log(err);
                toast.error(`Bad user credentials. ${err.message}`);
           }
      };

@@ -6,10 +6,11 @@ import PropTypes from "prop-types";
 
 // assets
 import { ReactComponent as DeleteIcon } from "../assets/svg/deleteIcon.svg";
+import { ReactComponent as EditIcon } from "../assets/svg/editIcon.svg";
 import bedIcon from "../assets/svg/bedIcon.svg";
 import bathtubIcon from "../assets/svg/bathtubIcon.svg";
 
-const ListingItem = ({ listing, id, onDelete }) => {
+const ListingItem = ({ listing, id, onDelete, onEdit }) => {
      return (
           <li className="categoryListing">
                <Link
@@ -58,6 +59,12 @@ const ListingItem = ({ listing, id, onDelete }) => {
                          }}
                     />
                )}
+               {onEdit && (
+                    <EditIcon
+                         className="editIcon"
+                         onClick={() => onEdit(listing.id)}
+                    />
+               )}
           </li>
      );
 };
@@ -66,6 +73,7 @@ ListingItem.propTypes = {
      listing: PropTypes.object.isRequired,
      id: PropTypes.string.isRequired,
      onDelete: PropTypes.func,
+     onEdit: PropTypes.func,
 };
 
 export default ListingItem;

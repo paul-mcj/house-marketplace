@@ -1,14 +1,13 @@
 // react and misc
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 // firebase
 import { getAuth, updateProfile } from "firebase/auth";
 import {
      doc,
      updateDoc,
-     collection,
-     getDoc,
      getDocs,
+     collection,
      query,
      where,
      orderBy,
@@ -48,7 +47,7 @@ const Profile = () => {
      const [loading, setLoading] = useState(true);
 
      // get user listings from backend
-     const fetchUserListings = async () => {
+     const fetchUserListings = useCallback(async () => {
           try {
                const listingsRef = collection(db, "listings");
                const q = query(
@@ -68,16 +67,15 @@ const Profile = () => {
                setListings(() => listings);
                setLoading(() => false);
           } catch (err) {
-               console.log(err);
                toast.error(`Could not fetch listings ${err.message}`);
           }
-     };
+     }, [userId]);
 
      // fetch listings when component loads
      useEffect(() => {
           // call async function
           fetchUserListings();
-     }, []);
+     }, [fetchUserListings]);
 
      // update state with input values
      const handleOnChange = (e) => {
@@ -101,6 +99,9 @@ const Profile = () => {
                toast.success("Listing was successfully deleted!");
           }
      };
+
+     // edit a listing
+     const handleEdit = (listingId) => navigate(`/edit-listing/${listingId}`);
 
      // form submission
      const handleOnSubmit = async () => {
@@ -191,6 +192,9 @@ const Profile = () => {
                                              id={listing.id}
                                              onDelete={() =>
                                                   handleDelete(listing.id)
+                                             }
+                                             onEdit={() =>
+                                                  handleEdit(listing.id)
                                              }
                                         />
                                    ))}

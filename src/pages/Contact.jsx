@@ -31,7 +31,6 @@ const Contact = () => {
                const docSnap = await getDoc(docRef);
 
                if (docSnap.exists()) {
-                    console.log(docSnap.data());
                     setLandlord(() => docSnap.data());
                } else {
                     // this error will show if the user of the listing is non-existent

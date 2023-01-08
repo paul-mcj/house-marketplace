@@ -83,7 +83,6 @@ const Signup = () => {
                     `Welcome to House Marketplace, ${auth.currentUser.displayName}!`
                );
           } catch (err) {
-               console.log(err);
                toast.error(
                     `Oops! Something went wrong with registration. ${err.message}`
                );

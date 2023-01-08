@@ -7,6 +7,9 @@ import { Link, useParams } from "react-router-dom";
 // react leaflet
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 
+// toastify
+import { toast } from "react-toastify";
+
 // components
 import Spinner from "../components/Spinner";
 
@@ -58,11 +61,10 @@ const Listing = () => {
 
                     if (docSnap.exists()) {
                          setListing(() => docSnap.data());
-                         console.log(docSnap.data());
                          setLoading(() => false);
                     }
                } catch (err) {
-                    console.log(err);
+                    toast.error("There was an error displaying listing");
                }
           };
           fetchListing();
@@ -76,8 +78,15 @@ const Listing = () => {
           <main>
                {/* Image Slider */}
                <Swiper
-                    modules={[Navigation, Pagination, Scrollbar, A11y]}
+                    modules={[
+                         Navigation,
+                         Pagination,
+                         Scrollbar,
+                         Autoplay,
+                         A11y,
+                    ]}
                     slidesPerView={1}
+                    autoplay={{ delay: 5000, disableOnInteraction: false }}
                     pagination={{ clickable: true }}
                     style={{ height: "300px" }}
                >

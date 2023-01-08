@@ -45,7 +45,6 @@ const Slider = () => {
                });
                setListings(() => listings);
                setLoading(() => false);
-               // console.log(listings);
           };
 
           fetchListings();
@@ -55,14 +54,26 @@ const Slider = () => {
           return <Spinner />;
      }
 
+     // if there are no current listings available, then remove the Slider (as it creates a large open space at the top of the app otherwise)
+     if (listings.length === 0) {
+          return <></>;
+     }
+
      return (
           listings && (
                <>
                     <p className="exploreHeading">Recommended</p>
                     <Swiper
                          style={{ height: "300px" }}
-                         modules={[Navigation, Pagination, Scrollbar, A11y]}
+                         modules={[
+                              Navigation,
+                              Pagination,
+                              Scrollbar,
+                              A11y,
+                              Autoplay,
+                         ]}
                          slidesPerView={1}
+                         autoplay={{ delay: 5000, disableOnInteraction: false }}
                          pagination={{ clickable: true }}
                     >
                          {listings.map(({ data, id }) => (

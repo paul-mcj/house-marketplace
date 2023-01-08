@@ -53,7 +53,6 @@ const OAuth = () => {
                     }, ${auth.currentUser.displayName}`
                );
           } catch (err) {
-               console.log(err);
                toast.error(
                     `Could not authorize with Google. Please try again. ${err.message}`
                );

@@ -1,5 +1,5 @@
 // react and misc
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // react toastify
 import { toast } from "react-toastify";
@@ -16,34 +16,24 @@ import {
      getDownloadURL,
 } from "firebase/storage";
 import { db } from "../firebase.config";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { serverTimestamp, doc, updateDoc, getDoc } from "firebase/firestore";
 
 // react router dom
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 // components
 import Spinner from "../components/Spinner";
 
-const CreateListing = () => {
-     // initialize auth
+const EditListing = () => {
+     // initialize hooks and state
      const auth = getAuth();
-
-     // initialize firebase storage capabilities
-     const storage = getStorage();
-
-     // initialize navigation
+     const storage = getStorage(); // initialize firebase storage capabilities (ex. saving uploaded images to the database)
      const navigate = useNavigate();
-
-     // use to check if component is mounted (to avoid memory leeks)
+     const params = useParams();
+     const { listingId } = params;
      const isMounted = useRef(true);
-
-     // loading state
      const [loading, setLoading] = useState(false);
-
-     // geolocation state
      const [geolocationEnabled, setGeolocationEnabled] = useState(true);
-
-     // set state defaults below
      const [formData, setFormData] = useState({
           type: "",
           name: "",
@@ -60,7 +50,7 @@ const CreateListing = () => {
           longitude: 0,
      });
 
-     // destructure state defaults
+     // destructure formData state defaults
      const {
           type,
           name,
@@ -77,23 +67,19 @@ const CreateListing = () => {
           longitude,
      } = formData;
 
-     useEffect(() => {
-          isMounted &&
-               onAuthStateChanged(auth, (user) => {
-                    user
-                         ? setFormData(() => ({
-                                ...formData,
-                                userRef: user.uid,
-                           }))
-                         : navigate("/signin");
-               });
-
-          return () => {
-               isMounted.current = false;
-          };
-
-          //note: adding formData as a dependency will result in a loop, so it should not be added as a dependency
-     }, [isMounted, auth, navigate]);
+     // async function to grab listing data from firebase
+     const fetchListing = useCallback(async () => {
+          const docRef = doc(db, "listings", listingId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+               setFormData(() => ({
+                    ...docSnap.data(),
+               }));
+          } else {
+               navigate("/");
+               toast.error("Listing does not exist :(");
+          }
+     }, [listingId, navigate]);
 
      // function that stores an image in firebase when a user adds one
      const storeImage = async (image) => {
@@ -141,7 +127,7 @@ const CreateListing = () => {
           });
      };
 
-     // form submission function (needs to be async to fetch geolocation resources)
+     // form submission function
      const handleOnSubmit = async (e) => {
           e.preventDefault();
 
@@ -207,9 +193,9 @@ const CreateListing = () => {
                timestamp: serverTimestamp(),
           };
 
-          // we don't want the actual images to be uploaded (as we have the url to each to give to the storage section of the firestore -- see the storeImage() async function in this component for more), as well as the address given (as it has been gathered with geolocation), so to circumvent larger uploads of data and resolve possible errors, just delete the following from the formCopyData before final submission:
+          // we don't want the actual images to be uploaded (as we have the url to each), as well as the address given (as it has been gathered with geolocation), so to circumvent larger uploads of data and resolve possible errors, just delete the following from the formCopyData before final submission:
           delete formDataCopy.images;
-          // delete formDataCopy.address;
+          //   delete formDataCopy.address;
 
           // also make sure to set the location to the address the user typed in (as using geolocation formatted data from Google maps for this isn't reliable)
           formDataCopy.location = address;
@@ -217,8 +203,10 @@ const CreateListing = () => {
           // if there is no offer, then delete the discounted price
           !formDataCopy.offer && delete formDataCopy.discountedPrice;
 
-          // now, save the cleaned up object to the database collection on firebase
-          const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+          // now update the listing on the database with the formDataCopy object
+          const docRef = doc(db, "listings", listingId);
+          await updateDoc(docRef, formDataCopy);
+
           toast.success("Listing saved!");
           navigate(`/category/${formDataCopy.type}/${docRef.id}`);
 
@@ -254,6 +242,30 @@ const CreateListing = () => {
           }
      };
 
+     // upon rendering, grab current listing data and put back into input fields
+     useEffect(() => {
+          isMounted &&
+               onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                         fetchListing();
+                    }
+               });
+
+          return () => {
+               isMounted.current = false;
+          };
+
+          //note: adding formData as a dependency will result in a loop, so it should not be added as a dependency
+     }, [isMounted, auth, fetchListing]);
+
+     // redirect if the listing is not the user's
+     useEffect(() => {
+          if (auth.currentUser === null) {
+               toast.error("You cannot edit this listing");
+               navigate("/");
+          }
+     }, [auth.currentUser, navigate]);
+
      if (loading) {
           return <Spinner />;
      }
@@ -262,7 +274,7 @@ const CreateListing = () => {
      return (
           <div className="profile">
                <header>
-                    <p className="pageHeader">Create a Listing</p>
+                    <p className="pageHeader">Edit Listing</p>
                </header>
 
                <main>
@@ -317,6 +329,7 @@ const CreateListing = () => {
                                         type="number"
                                         id="bedrooms"
                                         value={bedrooms}
+                                        placeholder="0"
                                         onChange={onMutate}
                                         min="1"
                                         max="50"
@@ -332,6 +345,7 @@ const CreateListing = () => {
                                         type="number"
                                         id="bathrooms"
                                         value={bathrooms}
+                                        placeholder="0"
                                         onChange={onMutate}
                                         min="1"
                                         max="50"
@@ -482,6 +496,7 @@ const CreateListing = () => {
                                    value={regularPrice}
                                    onChange={onMutate}
                                    min="50"
+                                   placeholder="0"
                                    max="750000000"
                                    required
                               />
@@ -500,6 +515,7 @@ const CreateListing = () => {
                                         type="number"
                                         id="discountedPrice"
                                         value={discountedPrice}
+                                        placeholder="0"
                                         onChange={onMutate}
                                         min="50"
                                         max="750000000"
@@ -526,7 +542,7 @@ const CreateListing = () => {
                               type="submit"
                               className="primaryButton createListingButton"
                          >
-                              Create Listing
+                              Edit Listing
                          </button>
                     </form>
                </main>
@@ -534,4 +550,4 @@ const CreateListing = () => {
      );
 };
 
-export default CreateListing;
+export default EditListing;

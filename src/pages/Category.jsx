@@ -69,7 +69,6 @@ const Category = () => {
                setListings((prev) => [...prev, ...listings]);
                setLoading(() => false);
           } catch (err) {
-               console.log(err);
                toast.error(`Could not fetch listings. ${err.message}`);
           }
      };
@@ -110,7 +109,6 @@ const Category = () => {
                     setListings(() => listings);
                     setLoading(() => false);
                } catch (err) {
-                    console.log(err);
                     toast.error(`Could not fetch listings. ${err.message}`);
                }
           };
